@@ -1,22 +1,19 @@
 <?php
-// Iniciar sessão
-session_start();
-
-// Conectar ao banco de dados
-$conn = new mysqli('127.0.0.1', 'root', '', 'loja_bolos');
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Falha na conexão com o banco de dados: " . $conn->connect_error);
-}
+require_once __DIR__ . '/config.php';
 
 // Variável para armazenar mensagens de erro
 $erro = '';
 
 // Verificar se o formulário foi enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nome_usuario = trim($_POST['nome_usuario']);
-    $senha = $_POST['senha'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_valido()) {
+    $erro = 'Sessão expirada. Recarregue a página e tente novamente.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nome_usuario = trim(post_texto('nome_usuario'));
+    $senha = post_texto('senha');
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $erro === '' && !tentativa_login_permitida($conn, $nome_usuario)) {
+    $erro = 'Muitas tentativas. Aguarde ' . JANELA_LOGIN_MINUTOS . ' minutos e tente novamente.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $erro === '') {
 
     // Consulta ao banco de dados para buscar o usuário
     $sql = "SELECT id, senha_hash FROM funcionarios WHERE nome_usuario = ?";
@@ -30,7 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Verificar se a senha fornecida corresponde ao hash armazenado
         if (password_verify($senha, $usuario['senha_hash'])) {
-            // Login bem-sucedido: salvar dados na sessão
+            // Login bem-sucedido: novo ID de sessão (evita fixação) e dados na sessão
+            limpar_tentativas_usuario($conn, $nome_usuario);
+            session_regenerate_id(true);
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['nome_usuario'] = $nome_usuario;
 
@@ -38,10 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: admin.php');
             exit;
         } else {
-            $erro = 'Senha incorreta.';
+            $erro = 'Usuário ou senha inválidos.';
         }
     } else {
-        $erro = 'Usuário não encontrado.';
+        // Usuário inexistente: gasta o mesmo tempo do bcrypt para não revelar quem existe.
+        password_verify($senha, '$2y$10$jT2kyUlAdWA9t90lBfG4BuKuUQ4qkihYZ8u1QFITUt6vAIYM2YTAW');
+        $erro = 'Usuário ou senha inválidos.';
     }
 }
 ?>
@@ -54,9 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-box">
             <h3 class="text-center mb-4">Login</h3>
             <?php if ($erro): ?>
-                <div class="alert alert-danger"><?php echo $erro; ?></div>
+                <div class="alert alert-danger"><?= e($erro) ?></div>
             <?php endif; ?>
             <form method="POST" action="">
+                <?= csrf_campo() ?>
                 <div class="mb-3">
                     <label for="nome_usuario" class="form-label">Usuário</label>
                     <input type="text" class="form-control" id="nome_usuario" name="nome_usuario" placeholder="Digite seu usuário" required>
@@ -67,9 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Entrar</button>
             </form>
-            <div class="mt-3 text-center">
-                <a href="register.php">Não tem uma conta? Registre-se</a>
-            </div>
         </div>
     </div>
 

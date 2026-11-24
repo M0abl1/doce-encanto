@@ -1,14 +1,8 @@
 <?php
-// Conectar ao banco de dados
-$conn = new mysqli('127.0.0.1', 'root', '', 'loja_bolos');
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Falha na conexão com o banco de dados: " . $conn->connect_error);
-}
+require_once __DIR__ . '/config.php';
 
 // Consultar bolos cadastrados
-$sql = "SELECT * FROM bolos";
+$sql = "SELECT nome, imagem_url FROM bolos ORDER BY nome";
 $resultado = $conn->query($sql);
 ?>
 
@@ -112,10 +106,10 @@ $resultado = $conn->query($sql);
                     <div class="col-lg-6">
                         <div class="bolo-item">
                             <div class="flex-shrink-0">
-                                <img src="<?php echo $bolo['imagem_url']; ?>" alt="<?php echo $bolo['nome']; ?>">
+                                <img src="<?= e($bolo['imagem_url']) ?>" alt="<?= e($bolo['nome']) ?>" loading="lazy">
                             </div>
                             <div class="bolo-info">
-                                <h5 class="text-uppercase"><?php echo $bolo['nome']; ?></h5>
+                                <h5 class="text-uppercase"><?= e($bolo['nome']) ?></h5>
                             </div>
                         </div>
                     </div>

@@ -1,14 +1,9 @@
 <?php
-// Conectar ao banco de dados
-$conn = new mysqli('127.0.0.1', 'root', '', 'loja_bolos');
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Falha na conexão com o banco de dados: " . $conn->connect_error);
-}
+require_once __DIR__ . '/config.php';
+exigir_login();
 
 // Consultar os funcionários cadastrados
-$sql = "SELECT * FROM funcionarios"; // Tabela de funcionários
+$sql = "SELECT id, nome_usuario FROM funcionarios ORDER BY nome_usuario"; // nunca expor o hash da senha
 $resultado = $conn->query($sql);
 ?>
 
@@ -78,15 +73,13 @@ $resultado = $conn->query($sql);
                     <tr>
                         <th>ID</th>
                         <th>Nome de Usuário</th>
-                        <th>Senha Hash</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php while ($funcionario = $resultado->fetch_assoc()): ?>
                         <tr>
-                            <td><?php echo $funcionario['id']; ?></td>
-                            <td><?php echo $funcionario['nome_usuario']; ?></td>
-                            <td><?php echo $funcionario['senha_hash']; ?></td>
+                            <td><?= e($funcionario['id']) ?></td>
+                            <td><?= e($funcionario['nome_usuario']) ?></td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>

@@ -1,32 +1,31 @@
 <?php
-// Iniciar sessão para exibir mensagens de erro ou sucesso
-session_start();
+require_once __DIR__ . '/config.php';
 
-// Conectar ao banco de dados
-$conn = new mysqli('127.0.0.1', 'root', '', 'loja_bolos');
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Falha na conexão com o banco de dados: " . $conn->connect_error);
-}
+// Só funcionários logados cadastram novos funcionários.
+// O primeiro administrador é criado pela linha de comando: php criar_admin.php <usuario>
+exigir_login();
 
 // Inicializar variáveis para mensagens
 $mensagem_sucesso = '';
 $mensagem_erro = '';
 
 // Verificar se o formulário foi enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nome_usuario = trim($_POST['nome_usuario']);
-    $senha = $_POST['senha'];
-    $confirmar_senha = $_POST['confirmar_senha'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_valido()) {
+    $mensagem_erro = 'Sessão expirada. Recarregue a página e tente novamente.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nome_usuario = trim(post_texto('nome_usuario'));
+    $senha = post_texto('senha');
+    $confirmar_senha = post_texto('confirmar_senha');
 
     // Validar entradas
     if (empty($nome_usuario) || empty($senha) || empty($confirmar_senha)) {
         $mensagem_erro = 'Todos os campos são obrigatórios.';
     } elseif ($senha !== $confirmar_senha) {
         $mensagem_erro = 'As senhas não correspondem.';
-    } elseif (strlen($senha) < 6) {
-        $mensagem_erro = 'A senha deve ter pelo menos 6 caracteres.';
+    } elseif (mb_strlen($nome_usuario) > 50) {
+        $mensagem_erro = 'O nome de usuário deve ter no máximo 50 caracteres.';
+    } elseif (strlen($senha) < 8) {
+        $mensagem_erro = 'A senha deve ter pelo menos 8 caracteres.';
     } else {
         // Verificar se o nome de usuário já existe
         $sql = "SELECT id FROM funcionarios WHERE nome_usuario = ?";
@@ -39,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensagem_erro = 'O nome de usuário já está em uso.';
         } else {
             // Gerar hash da senha
-            $senha_hash = password_hash($senha, PASSWORD_BCRYPT);
+            $senha_hash = password_hash($senha, PASSWORD_BCRYPT, BCRYPT_OPCOES);
 
             // Inserir novo usuário no banco de dados
             $sql = "INSERT INTO funcionarios (nome_usuario, senha_hash) VALUES (?, ?)";
@@ -48,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($stmt->execute()) {
                 $mensagem_sucesso = 'Usuário registrado com sucesso!';
+            } elseif ($conn->errno === 1062) {
+                $mensagem_erro = 'O nome de usuário já está em uso.';
             } else {
                 $mensagem_erro = 'Erro ao registrar o usuário. Tente novamente.';
             }
@@ -151,12 +152,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="register-box">
             <h3 class="text-center mb-4">Registrar Novo Usuário</h3>
             <?php if ($mensagem_erro): ?>
-                <div class="alert alert-danger"><?php echo $mensagem_erro; ?></div>
+                <div class="alert alert-danger"><?= e($mensagem_erro) ?></div>
             <?php endif; ?>
             <?php if ($mensagem_sucesso): ?>
-                <div class="alert alert-success"><?php echo $mensagem_sucesso; ?></div>
+                <div class="alert alert-success"><?= e($mensagem_sucesso) ?></div>
             <?php endif; ?>
             <form method="POST" action="">
+                <?= csrf_campo() ?>
                 <div class="mb-3">
                     <label for="nome_usuario" class="form-label">Nome de Usuário</label>
                     <input type="text" class="form-control" id="nome_usuario" name="nome_usuario" placeholder="Digite seu nome de usuário" required>
@@ -172,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="btn btn-primary w-100">Registrar</button>
             </form>
             <div class="mt-3 text-center">
-                <a href="login.php" style="color: var(--primary);">Já tem uma conta? Faça login</a>
+                <a href="admin.php" style="color: var(--primary);">Voltar ao painel</a>
             </div>
         </div>
     </div>

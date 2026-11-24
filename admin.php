@@ -1,12 +1,6 @@
 <?php
-// Iniciar sessão
-session_start();
-
-// Verificar se o usuário está logado
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
-    exit;
-}
+require_once __DIR__ . '/config.php';
+exigir_login();
 ?>
 <?php include "head.php"; ?>
 
@@ -30,7 +24,7 @@ if (!isset($_SESSION['usuario_id'])) {
                 <h1 class="display-4 text-uppercase">Melhor equipe</h1>
             </div>
             <?php include "exibirusuarios.php"; ?>
-            =
+            <p class="text-center mt-3"><a href="register.php" class="btn btn-primary">Cadastrar funcionário</a></p>
         </div>
     </div>
 

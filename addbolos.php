@@ -1,25 +1,28 @@
 <?php
-// Conectar ao banco de dados
-$conn = new mysqli('127.0.0.1', 'root', '', 'loja_bolos');
-
-// Verificar conexão
-if ($conn->connect_error) {
-    die("Falha na conexão com o banco de dados: " . $conn->connect_error);
-}
+require_once __DIR__ . '/config.php';
+exigir_login();
 
 // Inicializar variáveis para mensagens
 $mensagem_sucesso = '';
 $mensagem_erro = '';
 
 // Verificar se o formulário de adição de bolo foi enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_valido()) {
+    $mensagem_erro = 'Sessão expirada. Recarregue a página e tente novamente.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['nome']) && isset($_POST['imagem_url'])) {
-        $nome = trim($_POST['nome']);
-        $imagem_url = trim($_POST['imagem_url']);
+        $nome = trim(post_texto('nome'));
+        $imagem_url = trim(post_texto('imagem_url'));
 
         // Validar entradas
+        $url_valida = filter_var($imagem_url, FILTER_VALIDATE_URL)
+            && in_array(strtolower((string) parse_url($imagem_url, PHP_URL_SCHEME)), ['http', 'https'], true);
         if (empty($nome) || empty($imagem_url)) {
             $mensagem_erro = 'Todos os campos são obrigatórios.';
+        } elseif (mb_strlen($nome) > 100 || strlen($imagem_url) > 500) {
+            $mensagem_erro = 'Nome ou URL muito longos.';
+        } elseif (!$url_valida) {
+            $mensagem_erro = 'Informe uma URL de imagem começando com http:// ou https://.';
         } else {
             // Inserir bolo no banco de dados
             $sql = "INSERT INTO bolos (nome, imagem_url) VALUES (?, ?)";
@@ -36,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Verificar se o formulário de exclusão foi enviado
     if (isset($_POST['deletar_nome'])) {
-        $deletar_nome = trim($_POST['deletar_nome']);
+        $deletar_nome = trim(post_texto('deletar_nome'));
 
         if (empty($deletar_nome)) {
             $mensagem_erro = 'O nome do bolo é obrigatório para exclusão.';
@@ -145,22 +148,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3 class="text-center mb-4">Adicionar Novo Bolo</h3>
 
             <?php if ($mensagem_erro): ?>
-                <div class="alert alert-danger"><?php echo $mensagem_erro; ?></div>
+                <div class="alert alert-danger"><?= e($mensagem_erro) ?></div>
             <?php endif; ?>
 
             <?php if ($mensagem_sucesso): ?>
-                <div class="alert alert-success"><?php echo $mensagem_sucesso; ?></div>
+                <div class="alert alert-success"><?= e($mensagem_sucesso) ?></div>
             <?php endif; ?>
 
             <!-- Formulário de Adição de Bolo -->
             <form method="POST" action="">
+                <?= csrf_campo() ?>
                 <div class="mb-3">
                     <label for="nome" class="form-label">Nome do Bolo</label>
                     <input type="text" class="form-control" id="nome" name="nome" placeholder="Digite o nome do bolo" required>
                 </div>
                 <div class="mb-3">
                     <label for="imagem_url" class="form-label">URL da Imagem</label>
-                    <input type="text" class="form-control" id="imagem_url" name="imagem_url" placeholder="Digite a URL da imagem" required>
+                    <input type="url" class="form-control" id="imagem_url" name="imagem_url" placeholder="Digite a URL da imagem" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Adicionar</button>
             </form>
@@ -171,6 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- Formulário de Exclusão de Bolo -->
             <form method="POST" action="">
+                <?= csrf_campo() ?>
                 <div class="mb-3">
                     <label for="deletar_nome" class="form-label">Nome do Bolo para Excluir</label>
                     <input type="text" class="form-control" id="deletar_nome" name="deletar_nome" placeholder="Digite o nome do bolo" required>

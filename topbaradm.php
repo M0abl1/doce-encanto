@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/config.php'; ?>
 <div class="container-fluid px-0 d-none d-lg-block">
     <div class="row gx-0">
         <!-- Seção de Contato -->
@@ -25,7 +26,10 @@
         <!-- Botão de Login -->
         <div class="col-lg-4 text-end bg-secondary py-3">
             <div class="d-inline-flex align-items-center justify-content-end h-100 pe-3">
-                <a href="index.php" class="btn bg-primary text-white border-0 text-uppercase px-4 py-2">Logout</a>
+                <form method="POST" action="logout.php" class="m-0">
+                    <?= csrf_campo() ?>
+                    <button type="submit" class="btn bg-primary text-white border-0 text-uppercase px-4 py-2">Logout</button>
+                </form>
             </div>
         </div>
     </div>
