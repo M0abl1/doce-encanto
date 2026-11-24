@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+
+    --color-cream-50: #fffaf3;
+    --color-cream-100: #fbf3e6;
+    --color-cream-200: #f3e3cb;
+    --color-cocoa-500: #8a6a58;
+    --color-cocoa-700: #5a3e31;
+    --color-cocoa-900: #2f1f18;
+    --color-berry-500: #b83a5e;
+    --color-berry-600: #9c2c4d;
+    --color-berry-50: #fbecef;
+    --color-caramel-400: #e3a05b;
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-cream-50 font-sans text-cocoa-900 antialiased;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-berry-500;
+    }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 bg-berry-500 text-white shadow-sm hover:bg-berry-600;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 border border-cocoa-900/15 bg-white text-cocoa-900 hover:border-cocoa-900/30 hover:bg-cream-100;
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 border border-rose-200 bg-white text-rose-700 hover:bg-rose-50;
+    }
+
+    .field {
+        @apply block w-full rounded-xl border border-cocoa-900/15 bg-white px-3.5 py-2.5 text-sm text-cocoa-900 shadow-xs placeholder:text-cocoa-500/70 focus:border-berry-500 focus:ring-2 focus:ring-berry-500/20 focus:outline-none;
+    }
+
+    .label {
+        @apply mb-1.5 block text-sm font-medium text-cocoa-700;
+    }
+
+    .card {
+        @apply rounded-2xl border border-cocoa-900/10 bg-white shadow-xs;
+    }
+
+    .eyebrow {
+        @apply text-xs font-semibold tracking-[0.18em] text-berry-500 uppercase;
+    }
+}
